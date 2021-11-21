@@ -13,7 +13,9 @@ func getAllWindows(in screen: Screen) -> [Window] {
     let pids = Array(Set(visibleWindows))
     let applications = pids.map { Application($0) }
     var windows = applications.flatMap { $0.windows }.filter { window in window.screen == screen.index }
-
+    if let fullScreen = windows.first(where:{ $0.isFull }) {
+        return [fullScreen]
+    }
     windows.sort { (first, second) in
         let origin = [first.position, second.position]
         return origin[0].x < origin[1].x || (origin[0].x == origin[1].x && origin[0].y < origin[1].y)
@@ -35,16 +37,50 @@ class Screen: CustomStringConvertible {
         description = screen.localizedName
         index = i
     }
-    func focusNext() {
+    @discardableResult
+    func next() -> Screen {
+        let screens = screens
+        let next = index < screens.count - 1 ? index + 1 : 0
+        let screen = screens[next]
+
+        screen.windows.first!.focus()
+        print("switched to \(screen)")
+        for window in screen.windows {
+            print(window)
+        }
+        return screen
+    }
+    @discardableResult
+    func previous() -> Screen {
+        let screens = screens
+        let previous = 0 < index ? index - 1 : screens.count - 1
+        let screen = screens[previous]
+
+        screen.windows.first!.focus()
+        print("switched to \(screen)")
+        for window in screen.windows {
+            print(window)
+        }
+        return screen
+    }
+    @discardableResult
+    func focusNext() -> Window {
         let windows = self.windows
         let last = windows.count - 1
         let focus = windows.firstIndex{ $0.isFocused }!
-        windows[focus < last ? focus + 1 : 0].focus()
+        let window = windows[focus < last ? focus + 1 : 0]
+
+        window.focus()
+        return window
     }
-    func focusPrevious() {
+    @discardableResult
+    func focusPrevious() -> Window {
         let windows = self.windows
         let focus = windows.firstIndex{ $0.isFocused }!
-        windows[0 < focus ? focus - 1 : windows.count - 1].focus()
+        let window = windows[0 < focus ? focus - 1 : windows.count - 1]
+
+        window.focus()
+        return window
     }
 }
 
@@ -87,6 +123,9 @@ class Window: CustomStringConvertible {
         AXUIElementCopyAttributeValue(window, kAXMainAttribute as CFString, &isMain)
         return isMain as! Bool
     }
+    var isFull: Bool {
+        size == screens[screen].size
+    }
     var isFocused: Bool { application.isActive && isMain }
     var screen: Int {
         screens.firstIndex { NSPointInRect(position as NSPoint, $0.frame) }!
@@ -107,27 +146,15 @@ class Window: CustomStringConvertible {
         AXValueGetValue(size as! AXValue, .cgSize, &self.size)
     }
     func focus() {
-        AXUIElementPerformAction(self.window, kAXRaiseAction as CFString)
         application.activate()
+        AXUIElementPerformAction(self.window, kAXRaiseAction as CFString)
         print(self)
     }
 }
 
-func getAllScreens() -> [Screen] {
+var screens: [Screen] {
     NSScreen.screens.sorted { (first, second) in
         let origin = [first.frame.origin, second.frame.origin]
         return origin[0].x < origin[1].x || (origin[0].x == origin[1].x && origin[0].y < origin[1].y)
     }.enumerated().map { (i, screen) in Screen(screen, i) }
-}
-
-let screens = getAllScreens()
-func execute() {
-    //for screen in screens {
-    //    print(screen)
-    //    for window in screen.windows {
-    //        sleep(1)
-    //        window.focus()
-    //    }
-    //}
-    print(screens)
 }
