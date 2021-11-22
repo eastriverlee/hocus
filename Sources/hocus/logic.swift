@@ -9,6 +9,21 @@ extension Window {
     }
 }
 
+func press(_ key: Keycode, _ modifiers: [CGEventFlags]) {
+    let source = CGEventSource(stateID: .hidSystemState)
+    let location = CGEventTapLocation.cghidEventTap
+    let down = CGEvent(keyboardEventSource: source, virtualKey: key.rawValue, keyDown: true)
+    let up = CGEvent(keyboardEventSource: source, virtualKey: key.rawValue, keyDown: false)
+    let mask = modifiers.reduce(0) { $0 | $1.rawValue }
+
+    down?.flags = .init(rawValue: mask)
+    down?.post(tap: location)
+    up?.post(tap: location)
+}
+func toggleFullScreen() {
+    press(.f, [.maskControl, .maskCommand])
+}
+
 func getAllWindows(in screen: Screen? = nil) -> [Window] {
     let options = CGWindowListOption(arrayLiteral: .excludeDesktopElements, .optionOnScreenOnly)
     let windowsListInfo = CGWindowListCopyWindowInfo(options, CGWindowID(0))
@@ -44,7 +59,7 @@ class Screen: UI {
     private let screen: NSScreen
     var frame: CGRect { screen.frame }
     var position: CGPoint { frame.origin }
-    var size: CGSize { CGSize(width: frame.width, height: frame.height) }
+    var size: CGSize { frame.size }
     var windows: [Window] { getAllWindows(in: self) }
 
     init(_ screen: NSScreen, _ i: Int) {
@@ -122,8 +137,22 @@ class Application: CustomStringConvertible {
 class Window: UI {
     let application: Application
     var interface: AXUIElement
-    var position: CGPoint = .zero
-    var size: CGSize = .zero
+    var position: CGPoint {
+        var position_: CFTypeRef?
+        var position: CGPoint = .zero
+
+        AXUIElementCopyAttributeValue(interface, kAXPositionAttribute as CFString, &position_)
+        AXValueGetValue(position_ as! AXValue, .cgPoint, &position)
+        return position
+    }
+    var size: CGSize {
+        var size_: CFTypeRef?
+        var size: CGSize = .zero
+        
+        AXUIElementCopyAttributeValue(interface, kAXSizeAttribute as CFString, &size_)
+        AXValueGetValue(size_ as! AXValue, .cgSize, &size)
+        return size
+    }
     var isMain: Bool {
         var isMain: CFTypeRef?
 
@@ -139,22 +168,27 @@ class Window: UI {
     }
 
     init(_ application: Application, _ window: AXUIElement, _ i: Int) {
-        var position: CFTypeRef?
-        var size: CFTypeRef?
 
         self.application = application
         self.interface = window
-        AXUIElementCopyAttributeValue(interface, kAXPositionAttribute as CFString, &position)
-        AXValueGetValue(position as! AXValue, .cgPoint, &self.position)
-        AXUIElementCopyAttributeValue(interface, kAXSizeAttribute as CFString, &size)
-        AXValueGetValue(size as! AXValue, .cgSize, &self.size)
-        super.init(i, application.description + ":\(self.position)")
+        super.init(i, application.description + ":\(i)")
     }
     func focus() {
         application.activate()
         while !application.isActive { }
         AXUIElementSetAttributeValue(interface, kAXMainAttribute as CFString, kCFBooleanTrue)
         print(self)
+    }
+    func fit(in location: inout CGRect) {
+        let position: CFTypeRef = AXValueCreate(.cgPoint, &location.origin)!
+        let size: CFTypeRef = AXValueCreate(.cgSize, &location.size)!
+
+        if isFull { 
+            toggleFullScreen()
+            sleep(1)
+        }
+        AXUIElementSetAttributeValue(interface, kAXPositionAttribute as CFString, position)
+        AXUIElementSetAttributeValue(interface, kAXSizeAttribute as CFString, size)
     }
 }
 

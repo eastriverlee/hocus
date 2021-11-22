@@ -185,13 +185,20 @@ func currentScreenIndex() -> Int {
 func currentScreen() -> Screen {
     screens[currentScreenIndex()]
 }
+func currentWindow() -> Window {
+    currentScreen().windows.first { $0.isFocused }!
+}
 
+var location: [CGRect] = [CGRect(x: 0, y: 0, width: 400, height: 400)]
 func listenInput() {
     print(screens)
     NSEvent.addGlobalMonitorForEvents(matching: [.keyDown]) { event in
         let key = Key(event)
         let modifiers: Set<Keycode> = [.shift, .option, .control]
         switch key {
+
+        case Key(.x, modifiers):
+            currentWindow().fit(in: &location[0])
 
         case Key(.k, modifiers): fallthrough
         case Key(.upArrow, modifiers):
