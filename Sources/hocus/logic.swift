@@ -1,11 +1,110 @@
 import Cocoa
 import AppKit
 
+extension CGRect {
+    var midpoint: CGPoint {
+       var midpoint = origin 
+       midpoint.x += width / 2
+       midpoint.y += height / 2
+       return midpoint
+    }
+}
+extension String {
+    static func <(lhs: String, rhs: String) -> Bool {
+        if let lhs = lhs.cString(using: .utf8), let rhs = rhs.cString(using: .utf8) { 
+            return strcmp(lhs, rhs) < 0
+        }
+        return false
+    }
+    static func >(lhs: String, rhs: String) -> Bool {
+        if let lhs = lhs.cString(using: .utf8), let rhs = rhs.cString(using: .utf8) { 
+            return strcmp(lhs, rhs) > 0
+        }
+        return false
+    }
+}
+
 extension Window {
-    func isPrior(to window: Window) -> Bool {
-        self.position.x < window.position.x ||
-        (self.position.x == window.position.x && self.position.y < window.position.y) ||
-        (self.position.x == window.position.x && self.position.y == window.position.y && self.index < self.index)
+    func isPrior(to w: Window) -> Bool {
+        self.position.x < w.position.x ||
+        (self.position.x == w.position.x && self.position.y < w.position.y) ||
+        (self.position.x == w.position.x && self.position.y == w.position.y && self.size.width < w.size.width) ||
+        (self.position.x == w.position.x && self.position.y == w.position.y && self.size.width == w.size.width && w.size.height < w.size.height) ||
+        (self.position.x == w.position.x && self.position.y == w.position.y && self.size.width == w.size.width && self.size.height == w.size.height && self.description < w.description)
+    }
+}
+
+enum Container: Int {
+    case one, two, three, four, five, six, seven, eight, nine, zero
+    case h, m, l
+    case left, right, up, down
+    case next, back
+    case top, bottom
+    case primary, secondary
+
+    func area(in screen: Screen) -> CGRect {
+        var area = screen.frame
+        let unit = NSScreen.screens[0].frame.height
+        area.origin.y = -(area.height + area.origin.y) + unit + menubarHeight
+        print()
+        print("unit: \(unit)")
+        print("position: \(area.origin)")
+        area.size.height -= menubarHeight
+        switch self {
+        case .next, .back:
+            let index = self == .next ? screen.nextIndex : screen.previousIndex
+            let screen = screens[index]
+            let window = currentWindow()!
+            window.fit(in: .five)
+            if let fullScreen = screen.windows.first (where: { $0.isFull }) {
+                fullScreen.focus()
+                toggleFullScreen()
+                sleep(1)
+                window.focus()
+            }
+            return Container.five.area(in: screen)
+
+        case .left, .right:
+            area.size.width /= 2
+            if self == .right { area.origin.x += area.width }
+
+        case .up, .down:
+            area.size.height /= 2
+            if self == .down { area.origin.y += area.height }
+
+        case .primary, .secondary:
+            area.size.width /= 3
+            let main = area.width * 2
+            if self == .primary { area.size.width = main } else { area.origin.x += main }
+
+        case .top, .bottom:
+            area.size.height /= 3
+            let main = area.size.height * 2
+            if self == .top { area.size.height = main } else { area.origin.y += main }
+
+        case .h, .m, .l:
+            area.size.height /= 3
+            let row = self == .h ? 0 : self == .m ? 1 : 2
+            area.origin.y += CGFloat(row) * area.height
+
+        case .one, .two, .three, .four, .five, .six, .seven, .eight, .nine:
+            area.size.width /= 3
+            area.size.height /= 3
+            area.origin.x += CGFloat(rawValue / 3) * area.width
+            area.origin.y += CGFloat(rawValue % 3) * area.height
+
+        default:
+            break
+        }
+        print("\(area) in \(screen.frame)[\(screen.index)]")
+        print()
+        return area
+    }
+}
+
+extension CGPoint {
+    func distance(to p: CGPoint) -> CGFloat {
+        sqrt(pow(self.x - p.x, 2) + pow(self.y - p.y, 2))
     }
 }
 
@@ -20,6 +119,7 @@ func press(_ key: Keycode, _ modifiers: [CGEventFlags]) {
     down?.post(tap: location)
     up?.post(tap: location)
 }
+
 func toggleFullScreen() {
     press(.f, [.maskControl, .maskCommand])
 }
@@ -56,7 +156,7 @@ class UI: CustomStringConvertible {
 }
 
 class Screen: UI {
-    private let screen: NSScreen
+    let screen: NSScreen
     var frame: CGRect { screen.frame }
     var position: CGPoint { frame.origin }
     var size: CGSize { frame.size }
@@ -64,39 +164,55 @@ class Screen: UI {
 
     init(_ screen: NSScreen, _ i: Int) {
         self.screen = screen
-        super.init(i, screen.localizedName)
+        super.init(i, screen.localizedName + ":\(screen.frame)")
     }
+    var nextIndex: Int { index < screens.count - 1 ? index + 1 : 0 }
+    var previousIndex: Int { 0 < index ? index - 1 : screens.count - 1 }
     @discardableResult
     func next() -> Screen {
         let screens = screens
-        let next = index < screens.count - 1 ? index + 1 : 0
-        let screen = screens[next]
+        var screen = self
 
-        screen.windows.first!.focus()
+        print("--------------------")
+        for _ in 0..<screens.count {
+            screen = screens[screen.nextIndex]
+            print(screen.windows)
+            if let window = screen.windows.first {
+                window.focus()
+                break
+            }
+        }
         return screen
     }
     @discardableResult
     func previous() -> Screen {
         let screens = screens
-        let previous = 0 < index ? index - 1 : screens.count - 1
-        let screen = screens[previous]
+        var screen = self
 
-        screen.windows.first!.focus()
+        print("--------------------")
+        for _ in 0..<screens.count {
+            screen = screens[screen.previousIndex]
+            print(screen.windows)
+            if let window = screen.windows.first {
+                window.focus()
+                break
+            }
+        }
         return screen
     }
     @discardableResult
-    func focusNext() -> Window {
+    func nextWindow() -> Window? {
         let windows = self.windows
-        let focus = windows.firstIndex{ $0.isFocused }!
+        guard let focus = windows.firstIndex(where: { $0.isFocused }) else { return nil }
         let window = windows[focus < windows.count - 1 ? focus + 1 : 0]
 
         window.focus()
         return window
     }
     @discardableResult
-    func focusPrevious() -> Window {
+    func previousWindow() -> Window? {
         let windows = self.windows
-        let focus = windows.firstIndex{ $0.isFocused }!
+        guard let focus = windows.firstIndex(where: { $0.isFocused }) else { return nil }
         let window = windows[0 < focus ? focus - 1 : windows.count - 1]
 
         window.focus()
@@ -164,11 +280,19 @@ class Window: UI {
     }
     var isFocused: Bool { application.isActive && isMain }
     var screen: Int {
-        screens.firstIndex { NSPointInRect(position as NSPoint, $0.frame) }!
+        let screens = screens
+        var midpoint = position
+        midpoint.x += size.width / 2
+        midpoint.y -= size.height / 2
+        if let index = screens.firstIndex(where: { NSPointInRect(midpoint, $0.frame) }) {
+            return index
+        }
+        let distances = screens.map { abs($0.frame.midpoint.distance(to: midpoint)) }
+        let closest = distances.min()
+        return distances.firstIndex { $0 == closest }!
     }
 
     init(_ application: Application, _ window: AXUIElement, _ i: Int) {
-
         self.application = application
         self.interface = window
         super.init(i, application.description + ":\(i)")
@@ -179,11 +303,13 @@ class Window: UI {
         AXUIElementSetAttributeValue(interface, kAXMainAttribute as CFString, kCFBooleanTrue)
         print(self)
     }
-    func fit(in location: inout CGRect) {
-        let position: CFTypeRef = AXValueCreate(.cgPoint, &location.origin)!
-        let size: CFTypeRef = AXValueCreate(.cgSize, &location.size)!
+    func fit(in container: Container) {
+        let screen = screens[screen]
+        var area = container.area(in: screen)
+        let position: CFTypeRef = AXValueCreate(.cgPoint, &area.origin)!
+        let size: CFTypeRef = AXValueCreate(.cgSize, &area.size)!
 
-        if isFull { 
+        if (area != screen.frame && isFull) || (area == screen.frame && !isFull) { 
             toggleFullScreen()
             sleep(1)
         }

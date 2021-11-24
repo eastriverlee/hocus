@@ -176,20 +176,17 @@ class Key: CustomStringConvertible, Equatable {
 }
 
 func currentScreenIndex() -> Int {
-    screens.firstIndex { screen in
-        screen.windows.first { window in
-            window.isFocused
-        } != nil
-    }!
+    currentWindow()?.screen ?? 0
 }
 func currentScreen() -> Screen {
     screens[currentScreenIndex()]
 }
-func currentWindow() -> Window {
-    currentScreen().windows.first { $0.isFocused }!
+func currentWindow() -> Window? {
+    getAllWindows().first { $0.isFocused }
 }
 
-var location: [CGRect] = [CGRect(x: 0, y: 0, width: 400, height: 400)]
+var menubarHeight: CGFloat { NSStatusBar.system.thickness }
+
 func listenInput() {
     print(screens)
     NSEvent.addGlobalMonitorForEvents(matching: [.keyDown]) { event in
@@ -197,26 +194,72 @@ func listenInput() {
         let modifiers: Set<Keycode> = [.shift, .option, .control]
         switch key {
 
-        case Key(.x, modifiers):
-            currentWindow().fit(in: &location[0])
+        case Key(.zero, modifiers):
+            currentWindow()?.fit(in: .zero)
+        case Key(.one, modifiers):
+            currentWindow()?.fit(in: .one)
+        case Key(.two, modifiers):
+            currentWindow()?.fit(in: .two)
+        case Key(.three, modifiers):
+            currentWindow()?.fit(in: .three)
+        case Key(.four, modifiers):
+            currentWindow()?.fit(in: .four)
+        case Key(.five, modifiers):
+            currentWindow()?.fit(in: .five)
+        case Key(.six, modifiers):
+            currentWindow()?.fit(in: .six)
+        case Key(.seven, modifiers):
+            currentWindow()?.fit(in: .seven)
+        case Key(.eight, modifiers):
+            currentWindow()?.fit(in: .eight)
+        case Key(.nine, modifiers):
+            currentWindow()?.fit(in: .nine)
 
-        case Key(.k, modifiers): fallthrough
+        case Key(.h, modifiers):
+            currentWindow()?.fit(in: .h)
+        case Key(.m, modifiers):
+            currentWindow()?.fit(in: .m)
+        case Key(.l, modifiers):
+            currentWindow()?.fit(in: .l)
+
+        case Key(.leftBracket, modifiers):
+            currentWindow()?.fit(in: .left)
+        case Key(.rightBracket, modifiers):
+            currentWindow()?.fit(in: .right)
+
+        case Key(.t, modifiers):
+            currentWindow()?.fit(in: .top)
+        case Key(.b, modifiers):
+            currentWindow()?.fit(in: .bottom)
+
+        case Key(.p, modifiers):
+            currentWindow()?.fit(in: .primary)
+        case Key(.s, modifiers):
+            currentWindow()?.fit(in: .secondary)
+
+        case Key(.u, modifiers):
+            currentWindow()?.fit(in: .up)
+        case Key(.d, modifiers):
+            currentWindow()?.fit(in: .down)
+
+        case Key(.period, modifiers):
+            currentWindow()?.fit(in: .next)
+        case Key(.comma, modifiers):
+            currentWindow()?.fit(in: .back)
+
         case Key(.upArrow, modifiers):
-            currentScreen().focusNext()
-
-        case Key(.j, modifiers): fallthrough
+            currentScreen().previousWindow()
         case Key(.downArrow, modifiers):
-            currentScreen().focusPrevious()
-
-        case Key(.h, modifiers): fallthrough
+            currentScreen().nextWindow()
         case Key(.leftArrow, modifiers):
             currentScreen().previous()
-
-        case Key(.l, modifiers): fallthrough
         case Key(.rightArrow, modifiers):
             currentScreen().next()
 
-        default: return
+        case Key(.equals, modifiers):
+            toggleFullScreen()
+
+        default: print(key); return
         }
     }
 }
