@@ -12,7 +12,7 @@ build:
 
 $(PACKAGE):
 	mkdir -p $(PACKAGE) &&\
-	cp $(SUPPORT)/* $(NAME).app/Contents &&\
+	cp -R $(SUPPORT)/* $(NAME).app/Contents &&\
 	cp $(BUILD)/$(NAME) $(PACKAGE)
 
 run: install

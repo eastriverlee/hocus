@@ -46,9 +46,11 @@ enum Container: Int {
         var area = screen.frame
         let unit = NSScreen.screens[0].frame.height
         area.origin.y = -(area.height + area.origin.y) + unit + menubarHeight
+
         print()
         print("unit: \(unit)")
         print("position: \(area.origin)")
+
         area.size.height -= menubarHeight
         switch self {
         case .next, .back:
@@ -173,7 +175,7 @@ class Screen: UI {
         let screens = screens
         var screen = self
 
-        print("--------------------")
+        print("--------\(index)------------")
         for _ in 0..<screens.count {
             screen = screens[screen.nextIndex]
             print(screen.windows)
@@ -189,7 +191,7 @@ class Screen: UI {
         let screens = screens
         var screen = self
 
-        print("--------------------")
+        print("--------\(index)------------")
         for _ in 0..<screens.count {
             screen = screens[screen.previousIndex]
             print(screen.windows)
@@ -206,6 +208,7 @@ class Screen: UI {
         guard let focus = windows.firstIndex(where: { $0.isFocused }) else { return nil }
         let window = windows[focus < windows.count - 1 ? focus + 1 : 0]
 
+        print("pick \(window)\(window.position) from \(windows)")
         window.focus()
         return window
     }
@@ -215,6 +218,7 @@ class Screen: UI {
         guard let focus = windows.firstIndex(where: { $0.isFocused }) else { return nil }
         let window = windows[0 < focus ? focus - 1 : windows.count - 1]
 
+        print("pick \(window)\(window.position) from \(windows)")
         window.focus()
         return window
     }
@@ -276,15 +280,16 @@ class Window: UI {
         return isMain as! Bool
     }
     var isFull: Bool {
-        size == screens[screen].size
+        size.height == screens[screen].size.height
     }
     var isFocused: Bool { application.isActive && isMain }
     var screen: Int {
         let screens = screens
         var midpoint = position
         midpoint.x += size.width / 2
-        midpoint.y -= size.height / 2
+        midpoint.y += size.height / 2
         if let index = screens.firstIndex(where: { NSPointInRect(midpoint, $0.frame) }) {
+            print("\(self) position: \(position), midpoint: \(midpoint) in \(index)")
             return index
         }
         let distances = screens.map { abs($0.frame.midpoint.distance(to: midpoint)) }

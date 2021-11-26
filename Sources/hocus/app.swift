@@ -187,85 +187,125 @@ func currentWindow() -> Window? {
 
 var menubarHeight: CGFloat { NSStatusBar.system.thickness }
 
+
+let modifiers: Set<Keycode> = [.shift, .option, .control]
+func execute(_ keycode: Keycode) {
+    let key = Key(keycode, modifiers)
+
+    execute(key)
+}
+
+func execute(_ key: Key) {
+    switch key {
+
+    case Key(.zero, modifiers):
+        currentWindow()?.fit(in: .zero)
+    case Key(.one, modifiers):
+        currentWindow()?.fit(in: .one)
+    case Key(.two, modifiers):
+        currentWindow()?.fit(in: .two)
+    case Key(.three, modifiers):
+        currentWindow()?.fit(in: .three)
+    case Key(.four, modifiers):
+        currentWindow()?.fit(in: .four)
+    case Key(.five, modifiers):
+        currentWindow()?.fit(in: .five)
+    case Key(.six, modifiers):
+        currentWindow()?.fit(in: .six)
+    case Key(.seven, modifiers):
+        currentWindow()?.fit(in: .seven)
+    case Key(.eight, modifiers):
+        currentWindow()?.fit(in: .eight)
+    case Key(.nine, modifiers):
+        currentWindow()?.fit(in: .nine)
+
+    case Key(.h, modifiers):
+        currentWindow()?.fit(in: .h)
+    case Key(.m, modifiers):
+        currentWindow()?.fit(in: .m)
+    case Key(.l, modifiers):
+        currentWindow()?.fit(in: .l)
+
+    case Key(.leftBracket, modifiers):
+        currentWindow()?.fit(in: .left)
+    case Key(.rightBracket, modifiers):
+        currentWindow()?.fit(in: .right)
+
+    case Key(.t, modifiers):
+        currentWindow()?.fit(in: .top)
+    case Key(.b, modifiers):
+        currentWindow()?.fit(in: .bottom)
+
+    case Key(.p, modifiers):
+        currentWindow()?.fit(in: .primary)
+    case Key(.s, modifiers):
+        currentWindow()?.fit(in: .secondary)
+
+    case Key(.u, modifiers):
+        currentWindow()?.fit(in: .up)
+    case Key(.d, modifiers):
+        currentWindow()?.fit(in: .down)
+
+    case Key(.period, modifiers):
+        currentWindow()?.fit(in: .next)
+    case Key(.comma, modifiers):
+        currentWindow()?.fit(in: .back)
+
+    case Key(.upArrow, modifiers):
+        currentScreen().previousWindow()
+    case Key(.downArrow, modifiers):
+        currentScreen().nextWindow()
+    case Key(.leftArrow, modifiers):
+        currentScreen().previous()
+    case Key(.rightArrow, modifiers):
+        currentScreen().next()
+
+    case Key(.equals, modifiers):
+        toggleFullScreen()
+
+        default: print(key)
+    }
+}
+
 func listenInput() {
     print(screens)
     NSEvent.addGlobalMonitorForEvents(matching: [.keyDown]) { event in
-        let key = Key(event)
-        let modifiers: Set<Keycode> = [.shift, .option, .control]
-        switch key {
-
-        case Key(.zero, modifiers):
-            currentWindow()?.fit(in: .zero)
-        case Key(.one, modifiers):
-            currentWindow()?.fit(in: .one)
-        case Key(.two, modifiers):
-            currentWindow()?.fit(in: .two)
-        case Key(.three, modifiers):
-            currentWindow()?.fit(in: .three)
-        case Key(.four, modifiers):
-            currentWindow()?.fit(in: .four)
-        case Key(.five, modifiers):
-            currentWindow()?.fit(in: .five)
-        case Key(.six, modifiers):
-            currentWindow()?.fit(in: .six)
-        case Key(.seven, modifiers):
-            currentWindow()?.fit(in: .seven)
-        case Key(.eight, modifiers):
-            currentWindow()?.fit(in: .eight)
-        case Key(.nine, modifiers):
-            currentWindow()?.fit(in: .nine)
-
-        case Key(.h, modifiers):
-            currentWindow()?.fit(in: .h)
-        case Key(.m, modifiers):
-            currentWindow()?.fit(in: .m)
-        case Key(.l, modifiers):
-            currentWindow()?.fit(in: .l)
-
-        case Key(.leftBracket, modifiers):
-            currentWindow()?.fit(in: .left)
-        case Key(.rightBracket, modifiers):
-            currentWindow()?.fit(in: .right)
-
-        case Key(.t, modifiers):
-            currentWindow()?.fit(in: .top)
-        case Key(.b, modifiers):
-            currentWindow()?.fit(in: .bottom)
-
-        case Key(.p, modifiers):
-            currentWindow()?.fit(in: .primary)
-        case Key(.s, modifiers):
-            currentWindow()?.fit(in: .secondary)
-
-        case Key(.u, modifiers):
-            currentWindow()?.fit(in: .up)
-        case Key(.d, modifiers):
-            currentWindow()?.fit(in: .down)
-
-        case Key(.period, modifiers):
-            currentWindow()?.fit(in: .next)
-        case Key(.comma, modifiers):
-            currentWindow()?.fit(in: .back)
-
-        case Key(.upArrow, modifiers):
-            currentScreen().previousWindow()
-        case Key(.downArrow, modifiers):
-            currentScreen().nextWindow()
-        case Key(.leftArrow, modifiers):
-            currentScreen().previous()
-        case Key(.rightArrow, modifiers):
-            currentScreen().next()
-
-        case Key(.equals, modifiers):
-            toggleFullScreen()
-
-        default: print(key); return
-        }
+        execute(Key(event))
     }
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    var item: NSStatusItem!
+
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        let statusBar = NSStatusBar.system
+        let menu = NSMenu(title: "hocus menu")
+        item = statusBar.statusItem(withLength: NSStatusItem.variableLength)
+		//item.button?.image = {
+		//	let image = #imageLiteral(resourceName: "logo")
+		//	image.size.width = 18
+		//	image.size.height = 18
+		//	image.isTemplate = true
+		//	return image
+		//}()
+        item.button?.title = "𝒇"
+        item.menu = menu
+        menu.addItem(withTitle: "left", action: #selector(AppDelegate.left), keyEquivalent: "[")
+        menu.addItem(withTitle: "right", action: #selector(AppDelegate.right), keyEquivalent: "]")
+        menu.addItem(withTitle: "fill", action: #selector(AppDelegate.fill), keyEquivalent: "0")
+        menu.addItem(withTitle: "quit", action: #selector(AppDelegate.quit), keyEquivalent: "")
         listenInput()
+    }
+    @objc func left() {
+        execute(.leftBracket)
+    }
+    @objc func right() {
+        execute(.rightBracket)
+    }
+    @objc func fill() {
+        execute(.zero)
+    }
+    @objc func quit() {
+        NSApplication.shared.terminate(self)
     }
 }
