@@ -243,7 +243,7 @@ class Application: CustomStringConvertible {
         self.pid = pid
         interface = AXUIElementCreateApplication(pid)
         AXUIElementCopyAttributeValue(interface, kAXTitleAttribute as CFString, &name)
-        description = name as! String
+        description = name as? String ?? ""
         AXUIElementCopyAttributeValues(interface, kAXWindowsAttribute as CFString, 0, Int.max, &windows)
         if let windows = windows as? [AXUIElement] {
             self.windows = windows.enumerated().map { (i, window) in Window(self, window, i) }

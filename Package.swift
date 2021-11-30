@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "hocus",
-    platforms: [.macOS("10.15")],
+    platforms: [.macOS("12.0")],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
@@ -15,9 +15,7 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .executableTarget(
             name: "hocus",
-            dependencies: []),
-        .testTarget(
-            name: "hocusTests",
-            dependencies: ["hocus"]),
+            dependencies: [],
+            resources: []),
     ]
 )

@@ -280,15 +280,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         let statusBar = NSStatusBar.system
         let menu = NSMenu(title: "hocus menu")
+        var url = URL(fileURLWithPath: CommandLine.arguments[0])
+        url = url.deletingLastPathComponent()
+        url = url.appendingPathComponent("../Resources/logo.png")
+
         item = statusBar.statusItem(withLength: NSStatusItem.variableLength)
-		//item.button?.image = {
-		//	let image = #imageLiteral(resourceName: "logo")
-		//	image.size.width = 18
-		//	image.size.height = 18
-		//	image.isTemplate = true
-		//	return image
-		//}()
-        item.button?.title = "𝒇"
+        print(url.absoluteString)
+        item.button?.image = {
+            let image = NSImage(byReferencing: url)
+            image.size.width = 18
+            image.size.height = 18
+            return image
+		}()
         item.menu = menu
         menu.addItem(withTitle: "left", action: #selector(AppDelegate.left), keyEquivalent: "[")
         menu.addItem(withTitle: "right", action: #selector(AppDelegate.right), keyEquivalent: "]")
