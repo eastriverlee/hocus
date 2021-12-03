@@ -1,5 +1,5 @@
-import Foundation
 import Cocoa
+import ScriptingBridge
 
 enum Keycode: UInt16 {
 
@@ -128,6 +128,10 @@ enum Keycode: UInt16 {
 
 typealias Modifier = NSEvent.ModifierFlags
 extension Modifier {
+    init(_ keys: Set<Keycode>) {
+       let rawValue = keys.reduce(0){ $0 | $1.rawValue }
+       self = Modifier(rawValue: UInt(rawValue))
+    }
     func contains(modifier: Modifier) -> Bool {
         self.rawValue | modifier.rawValue != 0
     }
@@ -190,6 +194,7 @@ var menubarHeight: CGFloat { NSStatusBar.system.thickness }
 
 
 let modifiers: Set<Keycode> = [.shift, .option, .control]
+
 func execute(_ keycode: Keycode) {
     let key = Key(keycode, modifiers)
 
@@ -269,11 +274,12 @@ func execute(_ key: Key) {
     }
 }
 
-func listenInput() {
-    print(screens)
-    NSEvent.addGlobalMonitorForEvents(matching: [.keyDown]) { event in
-        execute(Key(event))
+extension NSMenu {
+    func addItem(withTitle: String, action: Selector?, keyEquivalent: String, modifiers: Modifier) {
+        let item = addItem(withTitle: withTitle, action: action, keyEquivalent: keyEquivalent)
+        item.keyEquivalentModifierMask = modifiers
     }
+
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -295,14 +301,42 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return image
 		}()
         item.menu = menu
-        menu.addItem(withTitle: "left", action: #selector(AppDelegate.left), keyEquivalent: "[")
-        menu.addItem(withTitle: "right", action: #selector(AppDelegate.right), keyEquivalent: "]")
-        menu.addItem(withTitle: "fill", action: #selector(AppDelegate.fill), keyEquivalent: "0")
-        menu.addItem(withTitle: "quit", action: #selector(AppDelegate.quit), keyEquivalent: "")
+        let modifiers = Modifier([.option, .control, .shift])
+        print(modifiers.rawValue)
+        menu.addItem(withTitle: "Left", action: #selector(AppDelegate.left), keyEquivalent: "[", modifiers: modifiers)
+        menu.addItem(withTitle: "Right", action: #selector(AppDelegate.right), keyEquivalent: "]", modifiers: modifiers)
+        menu.addItem(withTitle: "Middle", action: #selector(AppDelegate.middle), keyEquivalent: "m", modifiers: modifiers)
+        menu.addItem(withTitle: "Fill", action: #selector(AppDelegate.fill), keyEquivalent: "0", modifiers: modifiers)
+        menu.addItem(withTitle: "Toggle Fullscreen", action: #selector(AppDelegate.fullscreen), keyEquivalent: "=", modifiers: modifiers)
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Quit", action: #selector(AppDelegate.quit), keyEquivalent: "")
+        askAccess()
         listenInput()
         print()
         print(getAllWindows())
         print()
+    }
+    func listenInput() {
+        print(screens)
+        NSEvent.addGlobalMonitorForEvents(matching: [.keyDown]) { event in
+            execute(Key(event))
+        }
+    }
+    func askAccess() {
+        while !AXIsProcessTrusted() {
+            openAccessibility()
+            let alert = NSAlert()
+            alert.messageText = "Turn on accessibility"
+            alert.informativeText = "To use hocus, select the hocus checkbox in Security & Privacy > Accessibility."
+            alert.alertStyle = .critical
+            alert.addButton(withTitle: "Accessibility Turned on")
+            alert.addButton(withTitle: "Quit")
+            let result = alert.runModal()
+            switch result {
+                case .alertSecondButtonReturn: quit()
+                default: break
+            }
+        }
     }
     @objc func left() {
         execute(.leftBracket)
@@ -310,13 +344,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func right() {
         execute(.rightBracket)
     }
+    @objc func middle() {
+        execute(.m)
+    }
     @objc func fill() {
         execute(.zero)
+    }
+    @objc func fullscreen() {
+        execute(.equals)
     }
     @objc func quit() {
         NSApplication.shared.terminate(self)
     }
 }
 
-NSApplication.shared.delegate = AppDelegate()
+let accessibility = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
+func openAccessibility() {
+    NSWorkspace.shared.open(accessibility)
+    print(accessibility)
+}
+
+let delegate = AppDelegate()
+NSApplication.shared.delegate = delegate
 _ = NSApplicationMain(CommandLine.argc, CommandLine.unsafeArgv)

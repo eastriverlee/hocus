@@ -124,7 +124,7 @@ func getAllWindows(in screen: Screen? = nil) -> [Window] {
         window["kCGWindowOwnerPID"] as! Int32
     }
     visibleWindows = Array(Set(visibleWindows))
-    var applications = visibleWindows.map { pid in Application(pid) }
+    let applications = visibleWindows.map { pid in Application(pid) }
     for application in applications {
         if application.description == "Finder" && !application.windows.isEmpty {
             let biggest = application.windows.map { window in
