@@ -109,7 +109,7 @@ enum Keycode: UInt16 {
     case period                    = 0x2F
     case forwardSlash              = 0x2C
     case backslash                 = 0x2A
-    case grave                     = 0x32
+    case backtick                  = 0x32
     case leftBracket               = 0x21
     case rightBracket              = 0x1E
 

@@ -77,14 +77,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             menu.addItem(instruction)
             menu.addItem(.separator())
         }
-        let launchAtLogin = NSMenuItem(title: LaunchAtLogin.isEnabled ? "Don't Start hocus at Login" : "Start hocus at Login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
+        let launchAtLogin = NSMenuItem(title: "Start hocus at Login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
         launchAtLogin.state = LaunchAtLogin.isEnabled ? .on : .off
         menu.addItem(launchAtLogin)
         menu.addItem(.separator())
         menu.addItem(withTitle: "Next Screen", action: #selector(nextScreen), key: .rightArrow)
-        menu.addItem(withTitle: "Prev Screen", action: #selector(previousScreen), key: .leftArrow)
+        menu.addItem(withTitle: "Previous Screen", action: #selector(previousScreen), key: .leftArrow)
         menu.addItem(withTitle: "Next Window", action: #selector(nextWindow), key: .downArrow)
-        menu.addItem(withTitle: "Prev Window", action: #selector(previousWindow), key: .upArrow)
+        menu.addItem(withTitle: "Previous Window", action: #selector(previousWindow), key: .upArrow)
+        menu.addItem(withTitle: "Jump Window", action: #selector(jumpWindow), key: " ")
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Move Next", action: #selector(moveToNextScreen), key: ".")
+        menu.addItem(withTitle: "Move Prev", action: #selector(moveToPreviousScreen), key: ",")
         menu.addItem(withTitle: "Left", action: #selector(left), key: "[")
         menu.addItem(withTitle: "Right", action: #selector(right), key: "]")
         menu.addItem(withTitle: "Primary", action: #selector(primary), key: "p")
@@ -173,6 +177,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     @objc func previousWindow() {
         execute(.upArrow)
+    }
+    @objc func jumpWindow() {
+        execute(.space)
+    }
+    @objc func moveToNextScreen() {
+        execute(.period)
+    }
+    @objc func moveToPreviousScreen() {
+        execute(.comma)
     }
     @objc func _1() {
         execute(.one)

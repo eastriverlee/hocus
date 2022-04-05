@@ -116,6 +116,8 @@ func execute(_ key: Key) {
     case Key(.l, modifiers): fallthrough
     case Key(.rightArrow, modifiers):
         currentScreen().next()
+    case Key(.space, modifiers):
+        press(.backtick, [.maskCommand])
 
     case Key(.equals, modifiers):
         toggleFullScreen()
