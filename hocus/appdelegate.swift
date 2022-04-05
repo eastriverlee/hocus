@@ -6,6 +6,7 @@
 //
 
 import Cocoa
+import LaunchAtLogin
 import ScriptingBridge
 
 let accessibility = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
@@ -52,14 +53,13 @@ extension NSMenu {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var item: NSStatusItem!
+    let statusBar = NSStatusBar.system
+    let menu = NSMenu(title: "hocus menu")
 
     private func openAccessibility() {
         NSWorkspace.shared.open(accessibility)
     }
     private func makeStatusBarMenu() {
-        let statusBar = NSStatusBar.system
-        let menu = NSMenu(title: "hocus menu")
-
         item = statusBar.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.image = {
             let image = NSImage(imageLiteralResourceName: "logo")
@@ -69,36 +69,40 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }()
         item.menu = menu
         if !accessibilityGranted {
-            askAccess()
+            askToGrantAccessibility()
             let instruction = NSMenuItem()
             instruction.indentationLevel = 1
             instruction.title = "Access Denied"
-            menu.addItem(withTitle: "Allow Access", action: #selector(AppDelegate.restart))
+            menu.addItem(withTitle: "Allow Access", action: #selector(restart))
             menu.addItem(instruction)
             menu.addItem(.separator())
         }
-        menu.addItem(withTitle: "Next Screen", action: #selector(AppDelegate.nextScreen), key: .rightArrow)
-        menu.addItem(withTitle: "Prev Screen", action: #selector(AppDelegate.previousScreen), key: .leftArrow)
-        menu.addItem(withTitle: "Next Window", action: #selector(AppDelegate.nextWindow), key: .downArrow)
-        menu.addItem(withTitle: "Prev Window", action: #selector(AppDelegate.previousWindow), key: .upArrow)
-        menu.addItem(withTitle: "Left", action: #selector(AppDelegate.left), key: "[")
-        menu.addItem(withTitle: "Right", action: #selector(AppDelegate.right), key: "]")
-        menu.addItem(withTitle: "Primary", action: #selector(AppDelegate.primary), key: "p")
-        menu.addItem(withTitle: "Secondary", action: #selector(AppDelegate.secondary), key: "s")
-        menu.addItem(withTitle: "Top", action: #selector(AppDelegate.top), key: "t")
-        menu.addItem(withTitle: "Bottom", action: #selector(AppDelegate.bottom), key: "b")
-        menu.addItem(withTitle: "Middle", action: #selector(AppDelegate.middle), key: "m")
-        menu.addItem(withTitle: "Fill", action: #selector(AppDelegate.fill), key: "0")
-        menu.addItem(withTitle: "Toggle Fullscreen", action: #selector(AppDelegate.fullscreen), key: "=")
-        menu.addItem(withTitle: "1", action: #selector(AppDelegate._1), key: "1")
-        menu.addItem(withTitle: "2", action: #selector(AppDelegate._2), key: "2")
-        menu.addItem(withTitle: "3", action: #selector(AppDelegate._3), key: "3")
-        menu.addItem(withTitle: "4", action: #selector(AppDelegate._4), key: "4")
-        menu.addItem(withTitle: "5", action: #selector(AppDelegate._5), key: "5")
-        menu.addItem(withTitle: "6", action: #selector(AppDelegate._6), key: "6")
-        menu.addItem(withTitle: "7", action: #selector(AppDelegate._7), key: "7")
-        menu.addItem(withTitle: "8", action: #selector(AppDelegate._8), key: "8")
-        menu.addItem(withTitle: "9", action: #selector(AppDelegate._9), key: "9")
+        let launchAtLogin = NSMenuItem(title: LaunchAtLogin.isEnabled ? "Don't Start hocus at Login" : "Start hocus at Login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
+        launchAtLogin.state = LaunchAtLogin.isEnabled ? .on : .off
+        menu.addItem(launchAtLogin)
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Next Screen", action: #selector(nextScreen), key: .rightArrow)
+        menu.addItem(withTitle: "Prev Screen", action: #selector(previousScreen), key: .leftArrow)
+        menu.addItem(withTitle: "Next Window", action: #selector(nextWindow), key: .downArrow)
+        menu.addItem(withTitle: "Prev Window", action: #selector(previousWindow), key: .upArrow)
+        menu.addItem(withTitle: "Left", action: #selector(left), key: "[")
+        menu.addItem(withTitle: "Right", action: #selector(right), key: "]")
+        menu.addItem(withTitle: "Primary", action: #selector(primary), key: "p")
+        menu.addItem(withTitle: "Secondary", action: #selector(secondary), key: "s")
+        menu.addItem(withTitle: "Top", action: #selector(top), key: "t")
+        menu.addItem(withTitle: "Bottom", action: #selector(bottom), key: "b")
+        menu.addItem(withTitle: "Middle", action: #selector(middle), key: "m")
+        menu.addItem(withTitle: "Fill", action: #selector(fill), key: "0")
+        menu.addItem(withTitle: "Toggle Fullscreen", action: #selector(fullscreen), key: "=")
+        menu.addItem(withTitle: "1", action: #selector(_1), key: "1")
+        menu.addItem(withTitle: "2", action: #selector(_2), key: "2")
+        menu.addItem(withTitle: "3", action: #selector(_3), key: "3")
+        menu.addItem(withTitle: "4", action: #selector(_4), key: "4")
+        menu.addItem(withTitle: "5", action: #selector(_5), key: "5")
+        menu.addItem(withTitle: "6", action: #selector(_6), key: "6")
+        menu.addItem(withTitle: "7", action: #selector(_7), key: "7")
+        menu.addItem(withTitle: "8", action: #selector(_8), key: "8")
+        menu.addItem(withTitle: "9", action: #selector(_9), key: "9")
         if !accessibilityGranted {
             menu.disableItems()
         }
@@ -117,7 +121,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             print(getAllWindows())
         }
     }
-    @objc func askAccess() {
+    @objc func askToGrantAccessibility() {
         openAccessibility()
         let alert = NSAlert()
         alert.messageText = "\"hocus\" will not work until it is quit after selecting the accesibility checkbox"
@@ -199,6 +203,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     @objc func quit() {
         NSApp.terminate(self)
+    }
+    @objc func toggleLaunchAtLogin() {
+        LaunchAtLogin.isEnabled.toggle()
+        menu.item(at: 0)!.state = LaunchAtLogin.isEnabled ? .on : .off
     }
     @objc func restart(after seconds: TimeInterval = 0.5) -> Never {
         let task = Process()
