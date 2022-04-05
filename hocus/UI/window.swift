@@ -1,3 +1,10 @@
+//
+//  window.swift
+//  hocus
+//
+//  Created by eastriver lee on 2022/04/04.
+//
+
 import Cocoa
 
 class Window: UI {
@@ -76,7 +83,7 @@ class Window: UI {
         let position: CFTypeRef = AXValueCreate(.cgPoint, &area.origin)!
         let size: CFTypeRef = AXValueCreate(.cgSize, &area.size)!
 
-        if (area != screen.frame && isFull) || (area == screen.frame && !isFull) { 
+        if (area != screen.frame && isFull) || (area == screen.frame && !isFull) {
             toggleFullScreen()
             sleep(1)
         }
@@ -94,4 +101,3 @@ extension Window {
         (position.x == w.position.x && position.y == w.position.y && size.width == w.size.width && size.height == w.size.height && description < w.description)
     }
 }
-

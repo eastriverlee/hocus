@@ -1,3 +1,10 @@
+//
+//  application.swift
+//  hocus
+//
+//  Created by eastriver lee on 2022/04/04.
+//
+
 import Cocoa
 
 class Application: CustomStringConvertible {

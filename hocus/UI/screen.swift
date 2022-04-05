@@ -1,5 +1,19 @@
+//
+//  screen.swift
+//  hocus
+//
+//  Created by eastriver lee on 2022/04/04.
+//
+
 import Cocoa
 import AppKit
+
+var screens: [Screen] {
+    NSScreen.screens.sorted { (first, second) in
+        let origin = [first.frame.origin, second.frame.origin]
+        return origin[0].x < origin[1].x || (origin[0].x == origin[1].x && origin[0].y < origin[1].y)
+    }.enumerated().map { (i, screen) in Screen(screen, i) }
+}
 
 extension CGPoint {
     func distance(to p: CGPoint) -> CGFloat {
@@ -19,13 +33,13 @@ extension CGRect {
 
 extension String {
     static func <(lhs: String, rhs: String) -> Bool {
-        if let lhs = lhs.cString(using: .utf8), let rhs = rhs.cString(using: .utf8) { 
+        if let lhs = lhs.cString(using: .utf8), let rhs = rhs.cString(using: .utf8) {
             return strcmp(lhs, rhs) < 0
         }
         return false
     }
     static func >(lhs: String, rhs: String) -> Bool {
-        if let lhs = lhs.cString(using: .utf8), let rhs = rhs.cString(using: .utf8) { 
+        if let lhs = lhs.cString(using: .utf8), let rhs = rhs.cString(using: .utf8) {
             return strcmp(lhs, rhs) > 0
         }
         return false
@@ -237,16 +251,10 @@ class Screen: UI {
         return window
     }
 }
+
 extension Array {
     func index(_ i: Int) -> Int {
         let count = count
         return i >= 0 ? i % count : count - (abs(i) % count) - 1
     }
-}
-
-var screens: [Screen] {
-    NSScreen.screens.sorted { (first, second) in
-        let origin = [first.frame.origin, second.frame.origin]
-        return origin[0].x < origin[1].x || (origin[0].x == origin[1].x && origin[0].y < origin[1].y)
-    }.enumerated().map { (i, screen) in Screen(screen, i) }
 }
