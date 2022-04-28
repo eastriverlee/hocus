@@ -29,10 +29,13 @@ vim inspired shortcuts that correspond with certain words or arrows.
 * `⌃⌥.` move window to next screen
 * `⌃⌥,` move window to previous screen
 ### window resize
-* `⌃⌥p` primary
-* `⌃⌥s` secondary
-* `⌃⌥t` top
-* `⌃⌥b` bottom
+* `⌃⌥[` left half
+* `⌃⌥]` right half
+* `⌃⌥p` primary (left 2/3)
+* `⌃⌥s` secondary (right 1/3)
+* `⌃⌥t` top (top 2/3)
+* `⌃⌥b` bottom (bottom 1/3)
+* `⌃⌥m` middle
 * `⌃⌥=` toggle full screen (alias for `⌘⌃f`)
 * `⌃⌥0` fill screen
 * `⌃⌥1`…`⌃⌥9` 9 grid location
@@ -47,5 +50,5 @@ turning sandbox off makes this app unavailable to app store, which was necessary
 
 ## donation
 
-you can either download this from [itch.io](https://eastriverlee.itch.io/hocus) with a small donation or build it from [the source](https://github.com/eastriverlee/hocus) freely.
+you can either download this from [itch.io](https://eastriverlee.itch.io/hocus) for a small donation or build it from [the source](https://github.com/eastriverlee/hocus) freely.
 
